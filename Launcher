@@ -1,95 +1,87 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
+using Discord;
+using Discord.WebSocket;
 
-class Launcher
+class Program
 {
     private const string USERNAME = "admin";
     private const string PASSWORD = "password";
 
+    private DiscordSocketClient _client;
+
     static void Main(string[] args)
     {
-        Console.WriteLine("Welcome to Project Eclipse");
-        Console.WriteLine("-------------------------");
+        new Program().RunBotAsync().GetAwaiter().GetResult();
+    }
 
-        if (!Login())
+    public async Task RunBotAsync()
+    {
+        _client = new DiscordSocketClient();
+
+        _client.Log += LogAsync;
+
+        await _client.LoginAsync(TokenType.Bot, "YOUR_BOT_TOKEN");
+        await _client.StartAsync();
+
+        _client.MessageReceived += MessageReceivedAsync;
+
+        await Task.Delay(-1);
+    }
+
+    private Task LogAsync(LogMessage log)
+    {
+        Console.WriteLine(log);
+        return Task.CompletedTask;
+    }
+
+    private async Task MessageReceivedAsync(SocketMessage message)
+    {
+        if (message.Author.IsBot) return;
+
+        if (message.Content.ToLower() == "!login")
         {
-            Console.WriteLine("Invalid username or password. Access denied.");
-            return;
-        }
+            await message.Channel.SendMessageAsync("Please enter your username:");
+            string enteredUsername = (await _client.GetNextMessageAsync()).Content;
 
-        Console.WriteLine("Login successful. Welcome, " + USERNAME + "!");
+            await message.Channel.SendMessageAsync("Please enter your password:");
+            string enteredPassword = (await _client.GetNextMessageAsync()).Content;
 
-        bool running = true;
-        while (running)
-        {
-            DisplayOptions();
-            int option = GetIntInput();
-
-            switch (option)
+            if (IsValidLogin(enteredUsername, enteredPassword))
             {
-                case 1:
-                    ListDirectoryContents();
-                    break;
-                case 2:
-                    LaunchApplication();
-                    break;
-                case 3:
-                    Console.WriteLine("Exiting the launcher. Goodbye!");
-                    running = false;
-                    break;
-                default:
-                    Console.WriteLine("Invalid option. Please try again.");
-                    break;
+                await message.Channel.SendMessageAsync($"Login successful. Welcome, {USERNAME}!");
+                await DisplayOptionsAsync(message.Channel);
+            }
+            else
+            {
+                await message.Channel.SendMessageAsync("Invalid username or password. Access denied.");
             }
         }
     }
 
-    private static bool Login()
-    {
-        Console.Write("Enter username: ");
-        string enteredUsername = Console.ReadLine();
-        Console.Write("Enter password: ");
-        string enteredPassword = Console.ReadLine();
-        return IsValidLogin(enteredUsername, enteredPassword);
-    }
-
-    private static bool IsValidLogin(string enteredUsername, string enteredPassword)
+    private bool IsValidLogin(string enteredUsername, string enteredPassword)
     {
         return enteredUsername == USERNAME && enteredPassword == PASSWORD;
     }
 
-    private static void DisplayOptions()
+    private async Task DisplayOptionsAsync(IMessageChannel channel)
     {
-        Console.WriteLine("\nLauncher Options:");
-        Console.WriteLine("1. List Directory Contents");
-        Console.WriteLine("2. Launch Application");
-        Console.WriteLine("3. Exit");
-        Console.Write("Choose an option: ");
+        await channel.SendMessageAsync("\nLauncher Options:");
+        await channel.SendMessageAsync("1. List Directory Contents");
+        await channel.SendMessageAsync("2. Launch Application");
+        await channel.SendMessageAsync("3. Exit");
+        await channel.SendMessageAsync("Choose an option by typing its number:");
     }
 
-    private static int GetIntInput()
+    private async Task ListDirectoryContentsAsync(IMessageChannel channel)
     {
-        while (true)
-        {
-            if (int.TryParse(Console.ReadLine(), out int result))
-            {
-                return result;
-            }
-            else
-            {
-                Console.WriteLine("Invalid input. Please enter a number.");
-            }
-        }
-    }
-
-    private static void ListDirectoryContents()
-    {
-        Console.Write("Enter the directory path: ");
-        string directoryPath = Console.ReadLine().Trim();
+        await channel.SendMessageAsync("Enter the directory path:");
+        string directoryPath = (await _client.GetNextMessageAsync()).Content.Trim();
 
         if (string.IsNullOrEmpty(directoryPath))
         {
-            Console.WriteLine("Directory path cannot be empty. Please enter a valid directory path.");
+            await channel.SendMessageAsync("Directory path cannot be empty. Please enter a valid directory path.");
             return;
         }
 
@@ -100,30 +92,25 @@ class Launcher
 
             if (files.Length > 0 || directories.Length > 0)
             {
-                Console.WriteLine($"Files and folders in directory: {directoryPath}");
+                string fileList = $"Files and folders in directory: {directoryPath}\n";
                 foreach (string file in files)
                 {
-                    Console.WriteLine(Path.GetFileName(file));
+                    fileList += Path.GetFileName(file) + "\n";
                 }
                 foreach (string directory in directories)
                 {
-                    Console.WriteLine(Path.GetFileName(directory));
+                    fileList += Path.GetFileName(directory) + "\n";
                 }
+                await channel.SendMessageAsync(fileList);
             }
             else
             {
-                Console.WriteLine("No files or folders found in the directory.");
+                await channel.SendMessageAsync("No files or folders found in the directory.");
             }
         }
         else
         {
-            Console.WriteLine("Invalid directory path. Please enter a valid directory path.");
+            await channel.SendMessageAsync("Invalid directory path. Please enter a valid directory path.");
         }
-    }
-
-    private static void LaunchApplication()
-    {
-        // Implement application launching logic here
-        Console.WriteLine("Launching application...");
     }
 }
