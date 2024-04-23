@@ -50,7 +50,7 @@ class Program
 
             if (IsValidLogin(enteredUsername, enteredPassword))
             {
-                await message.Channel.SendMessageAsync($"Login successful. Welcome, {USERNAME}!");
+                await message.Channel.SendMessageAsync($"Login successful. Welcome to Project Eclipse, {USERNAME}!");
                 await DisplayOptionsAsync(message.Channel);
             }
             else
