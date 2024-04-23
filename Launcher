@@ -1,100 +1,129 @@
-import java.io.File;
-import java.util.Scanner;
+using System;
+using System.IO;
 
-public class Launcher {
+class Launcher
+{
+    private const string USERNAME = "admin";
+    private const string PASSWORD = "password";
 
-    private static final String USERNAME = "admin";
-    private static final String PASSWORD = "password";
+    static void Main(string[] args)
+    {
+        Console.WriteLine("Welcome to Project Eclipse");
+        Console.WriteLine("-------------------------");
 
-    public static void main(String[] args) {
-        try (Scanner scanner = new Scanner(System.in)) {
-            System.out.println("===============================================");
-            System.out.println("            Welcome to Project Eclipse          ");
-            System.out.println("===============================================");
-
-            if (!login(scanner)) {
-                System.out.println("Invalid username or password. Access denied.");
-                return;
-            }
-
-            System.out.println("\nLogin successful. Welcome, " + USERNAME + "!");
-
-            boolean running = true;
-            while (running) {
-                displayOptions();
-                int option = getIntInput(scanner);
-
-                switch (option) {
-                    case 1:
-                        listDirectoryContents(scanner);
-                        break;
-                    case 2:
-                        launchApplication();
-                        break;
-                    case 3:
-                        System.out.println("Exiting the launcher. Goodbye!");
-                        running = false;
-                        break;
-                    default:
-                        System.out.println("Invalid option. Please try again.");
-                }
-            }
-        }
-    }
-
-    private static boolean login(Scanner scanner) {
-        System.out.print("\nEnter your Project Eclipse username: ");
-        String enteredUsername = scanner.nextLine();
-        System.out.print("Enter your Project Eclipse password: ");
-        String enteredPassword = scanner.nextLine();
-        return isValidLogin(enteredUsername, enteredPassword);
-    }
-
-    private static boolean isValidLogin(String enteredUsername, String enteredPassword) {
-        return enteredUsername.equals(USERNAME) && enteredPassword.equals(PASSWORD);
-    }
-
-    private static void displayOptions() {
-        System.out.println("\nLauncher Options:");
-        System.out.println("1. Browse Game Library");
-        System.out.println("2. Launch Game");
-        System.out.println("3. Exit");
-        System.out.print("\nChoose an option: ");
-    }
-
-    private static int getIntInput(Scanner scanner) {
-        while (!scanner.hasNextInt()) {
-            System.out.println("Invalid input. Please enter a number.");
-            scanner.next(); // consume non-integer input
-        }
-        int option = scanner.nextInt();
-        scanner.nextLine(); // consume newline
-        return option;
-    }
-
-    private static void listDirectoryContents(Scanner scanner) {
-        System.out.print("\nEnter the directory path: ");
-        String directoryPath = scanner.nextLine().trim();
-
-        File directory = new File(directoryPath);
-        if (!directory.exists() || !directory.isDirectory()) {
-            System.out.println("Invalid directory path. Please enter a valid directory path.");
+        if (!Login())
+        {
+            Console.WriteLine("Invalid username or password. Access denied.");
             return;
         }
 
-        File[] files = directory.listFiles();
-        if (files != null && files.length > 0) {
-            System.out.println("\nFiles and folders in directory: " + directoryPath);
-            for (File file : files) {
-                System.out.println(file.getName());
+        Console.WriteLine("Login successful. Welcome, " + USERNAME + "!");
+
+        bool running = true;
+        while (running)
+        {
+            DisplayOptions();
+            int option = GetIntInput();
+
+            switch (option)
+            {
+                case 1:
+                    ListDirectoryContents();
+                    break;
+                case 2:
+                    LaunchApplication();
+                    break;
+                case 3:
+                    Console.WriteLine("Exiting the launcher. Goodbye!");
+                    running = false;
+                    break;
+                default:
+                    Console.WriteLine("Invalid option. Please try again.");
+                    break;
             }
-        } else {
-            System.out.println("\nNo files or folders found in the directory.");
         }
     }
 
-    private static void launchApplication() {
-        // Placeholder for launching game logic
-        System.out.println("\nLaunching game...");
+    private static bool Login()
+    {
+        Console.Write("Enter username: ");
+        string enteredUsername = Console.ReadLine();
+        Console.Write("Enter password: ");
+        string enteredPassword = Console.ReadLine();
+        return IsValidLogin(enteredUsername, enteredPassword);
+    }
+
+    private static bool IsValidLogin(string enteredUsername, string enteredPassword)
+    {
+        return enteredUsername == USERNAME && enteredPassword == PASSWORD;
+    }
+
+    private static void DisplayOptions()
+    {
+        Console.WriteLine("\nLauncher Options:");
+        Console.WriteLine("1. List Directory Contents");
+        Console.WriteLine("2. Launch Application");
+        Console.WriteLine("3. Exit");
+        Console.Write("Choose an option: ");
+    }
+
+    private static int GetIntInput()
+    {
+        while (true)
+        {
+            if (int.TryParse(Console.ReadLine(), out int result))
+            {
+                return result;
+            }
+            else
+            {
+                Console.WriteLine("Invalid input. Please enter a number.");
+            }
+        }
+    }
+
+    private static void ListDirectoryContents()
+    {
+        Console.Write("Enter the directory path: ");
+        string directoryPath = Console.ReadLine().Trim();
+
+        if (string.IsNullOrEmpty(directoryPath))
+        {
+            Console.WriteLine("Directory path cannot be empty. Please enter a valid directory path.");
+            return;
+        }
+
+        if (Directory.Exists(directoryPath))
+        {
+            string[] files = Directory.GetFiles(directoryPath);
+            string[] directories = Directory.GetDirectories(directoryPath);
+
+            if (files.Length > 0 || directories.Length > 0)
+            {
+                Console.WriteLine($"Files and folders in directory: {directoryPath}");
+                foreach (string file in files)
+                {
+                    Console.WriteLine(Path.GetFileName(file));
+                }
+                foreach (string directory in directories)
+                {
+                    Console.WriteLine(Path.GetFileName(directory));
+                }
+            }
+            else
+            {
+                Console.WriteLine("No files or folders found in the directory.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Invalid directory path. Please enter a valid directory path.");
+        }
+    }
+
+    private static void LaunchApplication()
+    {
+        // Implement application launching logic here
+        Console.WriteLine("Launching application...");
     }
 }
